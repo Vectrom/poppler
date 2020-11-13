@@ -376,6 +376,9 @@ const SysFontInfo *SysFontList::find(const GooString *name, bool fixedWidth, boo
 
 GlobalParams::GlobalParams(const char *customPopplerDataDir) : popplerDataDir(customPopplerDataDir)
 {
+    if (!popplerDataDir) {
++        popplerDataDir = ::getenv("POPPLER_DATADIR");
+
     // scan the encoding in reverse because we want the lowest-numbered
     // index for each char name ('space' is encoded twice)
     macRomanReverseMap = new NameToCharCode();
