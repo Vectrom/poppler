@@ -2,7 +2,7 @@ project(poppler)
 
 cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
 include(PopplerDefaults)
 include(PopplerMacros)
@@ -53,6 +53,7 @@ option(BUILD_GTK_TESTS "Whether to compile the GTK+ test programs." ON)
 option(BUILD_QT5_TESTS "Whether to compile the Qt5 test programs." ON)
 option(BUILD_QT6_TESTS "Whether to compile the Qt6 test programs." ON)
 option(BUILD_CPP_TESTS "Whether to compile the CPP test programs." ON)
+option(BUILD_TESTS "Whether to compile + enable poppler tests." ON)
 option(ENABLE_SPLASH "Build the Splash graphics backend." ON)
 option(ENABLE_UTILS "Compile poppler command line utils." ON)
 option(ENABLE_CPP "Compile poppler cpp wrapper." ON)
@@ -79,7 +80,7 @@ option(EXTRA_WARN "Enable extra compile warnings" OFF)
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-set(TESTDATADIR "${CMAKE_SOURCE_DIR}/../test" CACHE STRING "Specify test data dir.")
+set(TESTDATADIR "${PROJECT_SOURCE_DIR}/../test" CACHE STRING "Specify test data dir.")
 if(NOT (EXISTS ${TESTDATADIR} AND EXISTS ${TESTDATADIR}/test-poppler.c))
   message(WARNING "
  No test data found in $testdatadir.
@@ -223,6 +224,9 @@ endif()
 if(ENABLE_CPP)
   macro_optional_find_package(Iconv)
   set(ENABLE_CPP ${ICONV_FOUND})
+  if(ICONV_FOUND)
+    include_directories(${ICONV_INCLUDE_DIR})
+  endif()
   set(HAVE_ICONV ${ICONV_FOUND})
 endif()
 if(ENABLE_ZLIB)
@@ -564,10 +568,8 @@ ADD_GPERF_FILE(ZapfDingbatsWidths)
 
 if(MSVC)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_library(poppler STATIC ${poppler_SRCS})
-else()
-add_library(poppler ${poppler_SRCS})
 endif()
+add_library(poppler ${poppler_SRCS})
 set_target_properties(poppler PROPERTIES VERSION 104.0.0 SOVERSION 104)
 if(MINGW AND BUILD_SHARED_LIBS)
     get_target_property(POPPLER_SOVERSION poppler SOVERSION)
@@ -577,10 +579,15 @@ target_link_libraries(poppler LINK_PRIVATE ${poppler_LIBS})
 if(CMAKE_USE_PTHREADS_INIT)
    target_link_libraries(poppler LINK_PRIVATE Threads::Threads)
 endif()
+
+include(GenerateExportHeader)
+generate_export_header(poppler)
+
 install(TARGETS poppler RUNTIME DESTINATION bin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(ENABLE_UNSTABLE_API_ABI_HEADERS)
   install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/poppler_export.h
     poppler/Annot.h
     poppler/Array.h
     poppler/CachedFile.h
@@ -748,7 +755,9 @@ endif()
 if(ENABLE_GLIB)
   add_subdirectory(glib)
 endif()
-add_subdirectory(test)
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()
 if(ENABLE_QT5)
   add_subdirectory(qt5)
 endif()
@@ -848,9 +857,9 @@ endif()
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${POPPLER_VERSION})
 add_custom_target(dist
     COMMAND
-        COMMAND git log --stat | fmt --split-only > ${CMAKE_BINARY_DIR}/ChangeLog
-        COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar
-        COMMAND tar -C ${CMAKE_BINARY_DIR} -rf ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar ChangeLog --transform='s,,${ARCHIVE_NAME}/,' --owner root:0 --group root:0
-        COMMAND tar -C ${CMAKE_BINARY_DIR} -rf ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar glib/reference/html --transform='s,,${ARCHIVE_NAME}/,' --owner root:0 --group root:0
-        COMMAND xz -9 ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        COMMAND git log --stat | fmt --split-only > ${PROJECT_BINARY_DIR}/ChangeLog
+        COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD > ${PROJECT_BINARY_DIR}/${ARCHIVE_NAME}.tar
+        COMMAND tar -C ${PROJECT_BINARY_DIR} -rf ${PROJECT_BINARY_DIR}/${ARCHIVE_NAME}.tar ChangeLog --transform='s,,${ARCHIVE_NAME}/,' --owner root:0 --group root:0
+        COMMAND tar -C ${PROJECT_BINARY_DIR} -rf ${PROJECT_BINARY_DIR}/${ARCHIVE_NAME}.tar glib/reference/html --transform='s,,${ARCHIVE_NAME}/,' --owner root:0 --group root:0
+        COMMAND xz -9 ${PROJECT_BINARY_DIR}/${ARCHIVE_NAME}.tar
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})

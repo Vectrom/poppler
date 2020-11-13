@@ -33,6 +33,7 @@
 #ifndef GFXFONT_H
 #define GFXFONT_H
 
+#include "poppler_export.h"
 #include "goo/GooString.h"
 #include "Object.h"
 #include "CharTypes.h"
@@ -110,7 +111,7 @@ enum GfxFontLocType
     gfxFontLocResident // font resident in PS printer
 };
 
-class GfxFontLoc
+class POPPLER_EXPORT GfxFontLoc
 {
 public:
     GfxFontLoc();
@@ -148,7 +149,7 @@ public:
 #define fontItalic (1 << 6)
 #define fontBold (1 << 18)
 
-class GfxFont
+class POPPLER_EXPORT GfxFont
 {
 public:
     enum Stretch
@@ -327,7 +328,7 @@ protected:
 // Gfx8BitFont
 //------------------------------------------------------------------------
 
-class Gfx8BitFont : public GfxFont
+class POPPLER_EXPORT Gfx8BitFont : public GfxFont
 {
 public:
     Gfx8BitFont(XRef *xref, const char *tagA, Ref idA, GooString *nameA, GfxFontType typeA, Ref embFontIDA, Dict *fontDict);
@@ -387,7 +388,7 @@ private:
 // GfxCIDFont
 //------------------------------------------------------------------------
 
-class GfxCIDFont : public GfxFont
+class POPPLER_EXPORT GfxCIDFont : public GfxFont
 {
 public:
     GfxCIDFont(XRef *xref, const char *tagA, Ref idA, GooString *nameA, GfxFontType typeA, Ref embFontIDA, Dict *fontDict);
@@ -435,7 +436,7 @@ private:
 // GfxFontDict
 //------------------------------------------------------------------------
 
-class GfxFontDict
+class POPPLER_EXPORT GfxFontDict
 {
 public:
     // Build the font dictionary, given the PDF font dictionary.
